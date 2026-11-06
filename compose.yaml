@@ -1,0 +1,47 @@
+name: rhythm
+
+services:
+  rhythm:
+    image: ${RHYTHM_IMAGE_REGISTRY:-ghcr.io/pluxeljs}/rhythm:${RHYTHM_VERSION:-latest}
+    platform: linux/amd64
+    restart: unless-stopped
+    init: true
+    dns:
+      - 223.5.5.5
+      - 119.29.29.29
+    stop_grace_period: 30s
+    environment:
+      RHYTHM_PUBLIC_URL: '${RHYTHM_PUBLIC_URL:?set RHYTHM_PUBLIC_URL to the exact public origin}'
+      RHYTHM_GATEWAY_URL: '${RHYTHM_GATEWAY_URL:-${RHYTHM_PUBLIC_URL}}'
+      RHYTHM_ALLOWED_ORIGINS: '${RHYTHM_ALLOWED_ORIGINS:-[]}'
+      PLUXEL_WORKBENCH: 'true'
+      RHYTHM_TS_NICKNAME: '歌姬♪'
+    volumes:
+      - ./patches/app.mjs:/app/app.mjs:ro
+      - ${RHYTHM_DATA_DIR:-./data}:/var/lib/rhythm
+      - ${RHYTHM_MUSIC_DIR:-./music}:/music:ro
+    ports:
+      - '127.0.0.1:3311:3311'
+
+  gateway:
+    image: ${RHYTHM_IMAGE_REGISTRY:-ghcr.io/pluxeljs}/rhythm-gateway:${RHYTHM_VERSION:-latest}
+    platform: linux/amd64
+    restart: unless-stopped
+    depends_on:
+      rhythm:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    environment:
+      RHYTHM_GATEWAY_URL: '${RHYTHM_GATEWAY_URL:-${RHYTHM_PUBLIC_URL}}'
+    ports:
+      - '127.0.0.1:3310:8080'
+
+
+
+

@@ -1,0 +1,11 @@
+.env
+data/
+music/
+patches/
+*.sqlite*
+*.enc
+*.age
+*cookie*
+*.log
+upstream-app.mjs
+__pycache__/
